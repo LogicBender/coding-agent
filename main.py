@@ -89,28 +89,31 @@ def main():
                     continue
 
                 elif cmd[0] == '/history':
-                    console.print(f"\n[bold cyan][系统] 当前上下文历史 (Session: {agent.session_name}):[/bold cyan]")
-                    for i, msg in enumerate(agent.messages):
-                        role = msg.get("role", "unknown")
-                        content = str(msg.get("content", ""))
-                        if msg.get("tool_calls"):
-                            content += f" [调用了 {len(msg['tool_calls'])} 个工具]"
-                        short_content = content[:80].replace('\n', ' ') + ('...' if len(content)>80 else '')
-                        console.print(f"[[bold yellow]{i}[/bold yellow]] {role.upper()}: {short_content}")
+                    console.print(f"\n[bold cyan][系统] 当前工作区历史 (Session: {agent.session_name}):[/bold cyan]")
+                    for i, turn in enumerate(agent.history_B):
+                        node_id = turn.get("node_id", "未知节点")
+                        console.print(f"\n[bold magenta]--- 第 {i} 回合 ({node_id}) ---[/bold magenta]")
+                        for msg in turn.get("messages", []):
+                            role = msg.get("role", "unknown")
+                            content = str(msg.get("content", ""))
+                            if msg.get("tool_calls"):
+                                content += f" [调用了 {len(msg['tool_calls'])} 个工具]"
+                            short_content = content[:80].replace('\n', ' ') + ('...' if len(content)>80 else '')
+                            console.print(f"[{role.upper()}]: {short_content}")
                     continue
                     
                 elif cmd[0] == '/del' and len(cmd) > 1:
                     try:
                         idx = int(cmd[1])
-                        if 0 <= idx < len(agent.messages):
-                            if idx == 0:
-                                console.print("[red][系统] 不能删除 System Prompt！如果想重新开始，请使用 /clear[/red]")
-                            else:
-                                deleted = agent.messages.pop(idx)
-                                agent.save_history()
-                                console.print(f"[green][系统] 已删除第 {idx} 条消息 (Role: {deleted.get('role')})[/green]")
+                        if 0 <= idx < len(agent.history_B):
+                            deleted_turn = agent.history_B.pop(idx)
+                            agent.save_history()
+                            node_id = deleted_turn.get("node_id")
+                            if node_id:
+                                agent.notepad.evict_node(node_id)
+                            console.print(f"[green][系统] 已删除第 {idx} 回合。该回合对应的节点 {node_id} 已在图谱中标记为换出。[/green]")
                         else:
-                            console.print("[red][系统] 无效的索引号。请先使用 /history 查看索引。[/red]")
+                            console.print("[red][系统] 无效的索引号。请先使用 /history 查看有效的回合索引。[/red]")
                     except ValueError:
                         console.print("[red][系统] 用法: /del <数字>[/red]")
                     continue
@@ -127,9 +130,9 @@ def main():
                     continue
                     
                 elif cmd[0] == '/clear':
-                    agent.messages = [agent.messages[0]]
+                    agent.history_B = []
                     agent.save_history()
-                    console.print("[green][系统] 上下文已全部清空，Agent 记忆已重置！[/green]")
+                    console.print("[green][系统] L1 Cache (活跃上下文) 已全部清空，Agent 记忆已重置！\n提示: 图谱与原始日志依然安全保存在外存中。[/green]")
                     continue
                     
                 else:

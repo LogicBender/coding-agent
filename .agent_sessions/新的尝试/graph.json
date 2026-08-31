@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "task": "回答用户关于模型身份与能力范围的咨询",
+      "result": "成功，简明介绍 Coding Agent 身份及文件操作、命令执行、自主编程等能力",
+      "core_details": "纯对话问答，未涉及代码修改；介绍核心能力：读写文件、执行 Shell、自主编程、完整开发流程",
+      "turn_index": 1,
+      "in_Context": true,
+      "id": "Node_1"
+    }
+  ],
+  "edges": []
+}
