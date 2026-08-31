@@ -1,0 +1,16 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "task": "回应问候，介绍自身能力与可执行任务范围",
+      "result": "成功",
+      "core_details": "用户仅进行能力询问，无需调用工具；已清晰说明读写文件、执行命令、自主开发等核心能力及常见任务示例。",
+      "turn_index": 1,
+      "in_Context": true,
+      "id": "Node_1"
+    }
+  ],
+  "edges": []
+}

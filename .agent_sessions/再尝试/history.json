@@ -1,0 +1,16 @@
+[
+  {
+    "node_id": "Node_1",
+    "messages": [
+      {
+        "role": "user",
+        "content": "你好，你能做什么？"
+      },
+      {
+        "content": "你好！我是 **Coding Agent**，一名顶级自主编程助手。我可以帮你完成各类编程开发任务，主要包括：\n\n### 🛠️ 我能做什么\n1. **读写代码** —— 读取、创建、修改本地项目文件（支持全量写入与精准局部替换）。\n2. **执行命令** —— 运行代码、安装依赖、查看目录结构、执行 Shell 命令（如编译、测试、git 操作等）。\n3. **自主完成任务** —— 从需求分析、方案设计到编码落地、调试验证，全程自主推进。\n4. **多语言支持** —— Python、JavaScript/TypeScript、Java、Go、C/C++、Rust、Shell 等主流语言均可。\n\n### 📋 常见任务示例\n- 🆕 从零搭建一个新项目 / 脚手架\n- 🐛 定位并修复 bug\n- ✨ 添加新功能或重构已有代码\n- 📦 配置依赖、环境与构建脚本\n- 🧪 编写和运行测试\n- 🔍 分析代码结构、排查报错日志\n\n---\n\n你可以直接把具体需求告诉我，例如：\n- 「帮我写一个 Flask 的待办事项 API」\n- 「看看这个项目的报错是什么原因」\n- 「给某个文件加一个 XX 功能」\n\n那么，**你想让我帮你做什么呢？** 😊",
+        "role": "assistant",
+        "reasoning_content": "The user is just greeting and asking what I can do. This is a simple conversational message. I should respond in Chinese, introduce my capabilities. No tools needed. But I need to include the mandatory XML sections at the end since I'm not calling tools and preparing final reply.\n\nWait, the instructions say: \"在你决定【不调用任何工具，准备给用户最终回复】的那一次输出时，必须在回复末尾隐式加上两段 XML。\"\n\nSo I need to add the two XML blocks at the end. Let me write a friendly introduction in Chinese.\n\nLet me keep it concise but helpful."
+      }
+    ]
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "type": "task",
+      "desc": "等待用户提供具体编程需求",
+      "status": "⏳ 等待用户输入",
+      "id": "Task_1"
+    }
+  ],
+  "edges": []
+}
