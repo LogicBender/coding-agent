@@ -38,6 +38,7 @@ def chat_completion(client: OpenAI, messages: list, tools: list = None, model: s
         "model": model,
         "messages": messages,
         "stream": False,
+        "max_tokens": 8192,
         "reasoning_effort": "high",
         "extra_body": {"thinking": {"type": "enabled"}}
     }
@@ -47,7 +48,7 @@ def chat_completion(client: OpenAI, messages: list, tools: list = None, model: s
         kwargs["tools"] = tools
         
     response = client.chat.completions.create(**kwargs)
-    return response.choices[0].message
+    return response.choices[0]
 
 
 # 简单的测试代码

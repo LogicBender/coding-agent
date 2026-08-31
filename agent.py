@@ -29,6 +29,7 @@ class CodingAgent:
             "为了防止上下文超载，本系统采用了基于图谱的分级记忆。你的输入最上方会始终提供一个 <system_memory_graph>。\n"
             "1. 状态为 [🟢 在内存] 的节点，其细节还在你的上文对话历史中，你可以直接查阅。\n"
             "2. 状态为 [🔴 已换出] 的节点，其详细日志已被清理，发生『缺页中断』。如果你必须依赖该节点的细节，必须立刻调用 expand_node 工具读取原文，否则切勿盲目猜测！\n"
+            "3. 状态为 [🔗 指向 Node_X] 的节点，说明它的详细内容刚刚已经被调取，并存放在了 Node_X 的对话历史中。遇到这种情况，请直接去寻找 Node_X 附近的聊天记录，切勿重复调用工具！\n"
             "\n"
             "【强制结构化总结要求】\n"
             "在你决定【不调用任何工具，准备给用户最终回复】的那一次输出时，必须在回复内容的最末尾隐式加上一段 XML，用来总结本轮你做的所有事。系统会自动拦截这段 XML 用来后台建图，用户看不到：\n"
@@ -138,12 +139,14 @@ class CodingAgent:
                 api_messages.extend(dynamic_turn)
                 
                 with console.status("[bold green][系统] Agent 正在思考...[/bold green]", spinner="dots"):
-                    response_msg = chat_completion(
+                    response_choice = chat_completion(
                         client=self.client, 
                         messages=api_messages, 
                         tools=self.tools
                     )
                 
+                response_msg = response_choice.message
+                finish_reason = response_choice.finish_reason
                 msg_dict = response_msg.model_dump(exclude_none=True)
 
                 if response_msg.tool_calls:
@@ -161,10 +164,23 @@ class CodingAgent:
                             tool_result = f"用户拒绝了执行该操作。补充说明: {otherinfo}"
                         else:
                             with console.status(f"[bold blue][系统] 正在执行 {tool_name}...[/bold blue]"):
-                                tool_result = execute_tool(tool_name, arguments, notepad=self.notepad)
+                                tool_result = execute_tool(tool_name, arguments, notepad=self.notepad, current_node_id=new_node_id)
 
                         console.print(f"[bold green][系统] 工具执行结果:[/bold green]\n{tool_result}\n")
                         turn_messages.append({"role": "tool", "tool_call_id": tool_call.id, "content": tool_result})
+                    continue
+                    
+                # 【断点续写核心逻辑】
+                if finish_reason == 'length':
+                    console.print("\n[bold yellow][系统警告] 模型输出达到长度上限被截断！正在自动发起断点续写...[/bold yellow]")
+                    console.print(f"[dim]已接收到的前半部分:\n{response_msg.content}[/dim]\n")
+                    
+                    turn_messages.append(msg_dict)
+                    continue_msg = {
+                        "role": "user",
+                        "content": "⚠️ 系统提示：你的输出因达到最大 Token 上限被截断。请不要重复上文，不要说废话，请严格从上一句话断掉的最后一个字符开始继续输出剩余内容。"
+                    }
+                    turn_messages.append(continue_msg)
                     continue
 
                 # 最终回复阶段，解析 XML

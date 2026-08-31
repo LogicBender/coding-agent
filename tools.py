@@ -171,7 +171,7 @@ def get_tools_schema() -> list:
         }
     ]
 
-def execute_tool(tool_name: str, arguments: str, notepad=None) -> str:
+def execute_tool(tool_name: str, arguments: str, notepad=None, current_node_id=None) -> str:
     try:
         args_dict = json.loads(arguments)
     except json.JSONDecodeError:
@@ -186,6 +186,6 @@ def execute_tool(tool_name: str, arguments: str, notepad=None) -> str:
     elif tool_name == "run_command":
         return run_command(args_dict.get("command"))
     elif tool_name == "expand_node":
-        return notepad.expand_node(args_dict.get("node_id")) if notepad else "❌ 错误: 图引擎未初始化"
+        return notepad.expand_node(args_dict.get("node_id"), current_node_id) if notepad else "❌ 错误: 图引擎未初始化"
     else:
         return f"❌ 错误: 找不到名为 {tool_name} 的工具。"

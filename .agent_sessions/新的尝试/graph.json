@@ -16,7 +16,7 @@
       "result": "成功，创建 snake_game/index.html 单文件游戏，零依赖零污染",
       "core_details": "新建 snake_game/index.html，内含 HTML+CSS+JS；20x20 网格 Canvas 渲染，方向键/WASD 控制、空格暂停、触屏方向键、localStorage 最高分、吃食物加速、撞墙/撞自己判定；未改动项目任何现有文件",
       "turn_index": 2,
-      "in_Context": true,
+      "in_Context": "🔗 指向 Node_14",
       "id": "Node_2"
     },
     {
@@ -24,8 +24,88 @@
       "result": "",
       "core_details": "我当前被要求遵循的工作流程，主要包含以下三个核心机制：\n\n## 1. 🧠 图引导的分级记忆机制（Gr",
       "turn_index": 3,
-      "in_Context": true,
+      "in_Context": false,
       "id": "Node_3"
+    },
+    {
+      "task": "实现多文件协同的经典小游戏俄罗斯方块，隔离在独立文件夹",
+      "result": "成功，创建 tetris/ 目录下 7 个文件（HTML+CSS+5个JS模块），零依赖零污染",
+      "core_details": "新建 tetris/ 目录；JS 通过 window.Tetris 命名空间协同（constants/board/piece/renderer/main 五个模块按依赖顺序加载）；实现 7 种方块、墙踢旋转、幽灵投影、消行计分、等级加速、软/硬降、最高分 localStorage；node 环境不可用，改用 Python 脚本校验 JS 括号配对均通过",
+      "turn_index": 4,
+      "in_Context": true,
+      "id": "Node_4"
+    },
+    {
+      "task": "回顾并完整列举本次会话的所有历史对话与已完成任务",
+      "result": "成功，通过 expand_node 补齐被换出的 Node_2/Node_3 后，按时间顺序完整列出 4 轮对话（自我介绍、贪吃蛇、工作流程问答、俄罗斯方块）",
+      "core_details": "涉及缺页中断处理：Node_2 与 Node_3 为已换出状态，调用 expand_node 并行展开后才准确回答；已交付物为 snake_game/index.html 单文件贪吃蛇、tetris/ 目录下 7 文件俄罗斯方块，均零依赖零污染",
+      "turn_index": 5,
+      "in_Context": false,
+      "id": "Node_5"
+    },
+    {
+      "task": "补全上一轮遗漏的会话历史信息，重点补充俄罗斯方块任务",
+      "result": "成功，确认上轮漏掉第4次对话（俄罗斯方块），已补全完整4轮会话历史",
+      "core_details": "用户指出\"漏了一个信息\"，核实为上一轮列举在第3次对话处被截断，遗漏了 tetris/ 多文件俄罗斯方块任务；本次补全全部4轮对话，交付物为 snake_game/index.html 与 tetris/ 7文件俄罗斯方块",
+      "turn_index": 6,
+      "in_Context": false,
+      "id": "Node_6"
+    },
+    {
+      "task": "解释上一轮回复被截断的原因（输出长度上限）",
+      "result": "成功，诚实说明为 max_tokens 输出上限导致硬性截断，非记忆丢失，并提出改进措施",
+      "core_details": "截断发生在列举历史会话第3项（工作流程）时触顶，导致第4项俄罗斯方块未输出；内容仍存于记忆图谱，故可补全。改进：精简格式、分点短句、分段输出",
+      "turn_index": 7,
+      "in_Context": false,
+      "id": "Node_7"
+    },
+    {
+      "task": "再次完整回顾并列举本次会话的全部历史对话与任务",
+      "result": "成功，expand_node 重新展开已换出的 Node_2/Node_3 后，精简格式完整列举了全部 7 轮对话，避免再次截断",
+      "core_details": "本次会话共7轮：自我介绍、贪吃蛇、工作流程问答、俄罗斯方块、回顾历史、补全遗漏、解释截断。交付物为 snake_game/index.html 与 tetris/ 7文件俄罗斯方块，均隔离零污染。采用简洁列表替代表格避免 max_tokens 截断",
+      "turn_index": 8,
+      "in_Context": false,
+      "id": "Node_8"
+    },
+    {
+      "task": "回答用户关于当前还能做什么的能力询问",
+      "result": "成功，简洁列举通用能力、对已有贪吃蛇/俄罗斯方块的扩展方向及全新任务类型",
+      "core_details": "纯对话无代码改动；提及俄罗斯方块当前为纯随机而非7-bag、缺少Hold/T-spin等可改进点；延续零污染隔离原则",
+      "turn_index": 9,
+      "in_Context": false,
+      "id": "Node_9"
+    },
+    {
+      "task": "回应用户对重复调用 expand_node 的质疑",
+      "result": "成功，承认机械照搬\"已换出须 expand\"规则导致重复调用，未先检查对话历史中已有的展开内容",
+      "core_details": "用户拒绝再次 expand_node 并指出：之前第5/8轮已展开过 Node_2、Node_3 的原文，内容仍在对话历史中，应直接引用而非重复调用。改进原则：先检查上下文是否已有该节点信息，再决定是否 expand_node。本轮未再整理会话。",
+      "turn_index": 10,
+      "in_Context": false,
+      "id": "Node_10"
+    },
+    {
+      "task": "再次整理本次会话的全部历史对话与任务，且不重复调用 expand_node",
+      "result": "成功，直接引用对话历史中已有的 Node_2/Node_3 展开内容，精简格式完整列出全部 10 轮对话并说明本轮为第 11 轮",
+      "core_details": "吸取上轮教训：不再机械调用 expand_node，先确认上下文已有展开内容再直接引用。会话共11轮，交付物为 snake_game/index.html 与 tetris/ 7文件俄罗斯方块。用简洁编号列表避免 max_tokens 截断",
+      "turn_index": 11,
+      "in_Context": false,
+      "id": "Node_11"
+    },
+    {
+      "task": "再次完整整理本次会话全部历史内容",
+      "result": "成功，基于记忆图谱已有摘要直接整理，未调用 expand_node，完整列出 12 轮对话",
+      "core_details": "共12轮：自我介绍→贪吃蛇→工作流程→俄罗斯方块(多文件)→5/6/8/11四次回顾整理→截断解释→能力询问→质疑重复expand。交付物 snake_game/index.html 与 tetris/ 7文件。遵循教训：先查图谱摘要再决定是否expand、精简分点防截断",
+      "turn_index": 12,
+      "in_Context": true,
+      "id": "Node_12"
+    },
+    {
+      "task": "详细讲解之前俄罗斯方块多文件小游戏的实现方案",
+      "result": "成功，直接从上下文引用 Node_4 细节，详细说明架构、5 模块职责、核心算法与验证过程",
+      "core_details": "俄罗斯方块 tetris/ 7文件，window.Tetris 命名空间协同；关键算法：矩阵转置旋转、5偏移墙踢、幽灵投影模拟、满行splice消行、速度指数衰减；node不可用改Python校验括号配对",
+      "turn_index": 13,
+      "in_Context": true,
+      "id": "Node_13"
     }
   ],
   "edges": [
@@ -43,6 +123,246 @@
       "relation": "NEXT_STEP",
       "source": "Node_2",
       "target": "Node_3"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_3",
+      "target": "Node_4"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_4",
+      "target": "Node_2"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_4",
+      "target": "Node_5"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_5",
+      "target": "Node_1"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_5",
+      "target": "Node_2"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_5",
+      "target": "Node_3"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_5",
+      "target": "Node_4"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_5",
+      "target": "Node_6"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_6",
+      "target": "Node_1"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_6",
+      "target": "Node_2"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_6",
+      "target": "Node_3"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_6",
+      "target": "Node_4"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_6",
+      "target": "Node_5"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_6",
+      "target": "Node_7"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_7",
+      "target": "Node_5"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_7",
+      "target": "Node_6"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_7",
+      "target": "Node_8"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_8",
+      "target": "Node_1"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_8",
+      "target": "Node_2"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_8",
+      "target": "Node_3"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_8",
+      "target": "Node_4"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_8",
+      "target": "Node_5"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_8",
+      "target": "Node_6"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_8",
+      "target": "Node_7"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_8",
+      "target": "Node_9"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_9",
+      "target": "Node_1"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_9",
+      "target": "Node_2"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_9",
+      "target": "Node_4"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_9",
+      "target": "Node_10"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_10",
+      "target": "Node_3"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_10",
+      "target": "Node_5"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_10",
+      "target": "Node_8"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_10",
+      "target": "Node_11"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_11",
+      "target": "Node_8"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_11",
+      "target": "Node_10"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_11",
+      "target": "Node_2"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_11",
+      "target": "Node_3"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_11",
+      "target": "Node_4"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_11",
+      "target": "Node_12"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_12",
+      "target": "Node_11"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_12",
+      "target": "Node_8"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_12",
+      "target": "Node_10"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_12",
+      "target": "Node_5"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_12",
+      "target": "Node_4"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_12",
+      "target": "Node_2"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_12",
+      "target": "Node_13"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_13",
+      "target": "Node_4"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_13",
+      "target": "Node_2"
     }
   ]
 }
