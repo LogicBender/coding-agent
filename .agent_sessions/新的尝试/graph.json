@@ -10,7 +10,39 @@
       "turn_index": 1,
       "in_Context": true,
       "id": "Node_1"
+    },
+    {
+      "task": "在独立文件夹中实现自包含的贪吃蛇游戏",
+      "result": "成功，创建 snake_game/index.html 单文件游戏，零依赖零污染",
+      "core_details": "新建 snake_game/index.html，内含 HTML+CSS+JS；20x20 网格 Canvas 渲染，方向键/WASD 控制、空格暂停、触屏方向键、localStorage 最高分、吃食物加速、撞墙/撞自己判定；未改动项目任何现有文件",
+      "turn_index": 2,
+      "in_Context": true,
+      "id": "Node_2"
+    },
+    {
+      "task": "常规对话",
+      "result": "",
+      "core_details": "我当前被要求遵循的工作流程，主要包含以下三个核心机制：\n\n## 1. 🧠 图引导的分级记忆机制（Gr",
+      "turn_index": 3,
+      "in_Context": true,
+      "id": "Node_3"
     }
   ],
-  "edges": []
+  "edges": [
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_1",
+      "target": "Node_2"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_2",
+      "target": "Node_1"
+    },
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_2",
+      "target": "Node_3"
+    }
+  ]
 }
