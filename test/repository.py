@@ -1,5 +1,5 @@
 from model import Task
-from typing import List, Optional
+from typing import List
 
 
 class TaskRepository:
@@ -13,12 +13,9 @@ class TaskRepository:
         self._current_id += 1
         return task
 
-    def get(self, task_id: int) -> Optional[Task]:
-        return self._db.get(task_id)
-
     def get_all(self) -> List[Task]:
         return list(self._db.values())
 
-    def get_all_sorted_by_priority(self) -> List[Task]:
-        """按优先级从高到低排序返回所有任务"""
-        return sorted(self.get_all(), key=lambda t: t.priority, reverse=True)
+    def get_by_priority(self, priority: str) -> List[Task]:
+        """返回指定优先级的任务列表"""
+        return [task for task in self.get_all() if task.priority == priority]
