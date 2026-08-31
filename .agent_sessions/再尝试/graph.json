@@ -10,7 +10,26 @@
       "turn_index": 1,
       "in_Context": true,
       "id": "Node_1"
+    },
+    {
+      "task": "在 mini_task_manager 中新增任务优先级功能并修复 import bug",
+      "result": "成功",
+      "core_details": "重写 model/repository/service/cli 四个文件；修复 from models 应为 from model 的导入错误；新增 Priority 枚举(LOW/MEDIUM/HIGH)与 Task.priority 字段，实现排序/过滤/修改优先级 API；运行 cli.py 及 7 项断言测试全部通过。",
+      "turn_index": 2,
+      "in_Context": true,
+      "id": "Node_2"
     }
   ],
-  "edges": []
+  "edges": [
+    {
+      "relation": "NEXT_STEP",
+      "source": "Node_1",
+      "target": "Node_2"
+    },
+    {
+      "relation": "RELATES_TO",
+      "source": "Node_2",
+      "target": "Node_1"
+    }
+  ]
 }
