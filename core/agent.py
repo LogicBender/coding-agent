@@ -483,7 +483,35 @@ class CodingAgent:
                     edges_list = [e.strip() for e in edg.group(1).split(',')] if edg and edg.group(1).strip() else []
                 else:
                     parsed_det = clean_reply[:50]
-                
+
+                # 解析 2-Hop Planner 任务网络
+                match_plan = re.search(r'<plan_network>(.*?)</plan_network>', reply_text, re.DOTALL)
+                if match_plan:
+                    clean_reply = clean_reply.replace(match_plan.group(0), "").strip()
+                    plan_xml = match_plan.group(1)
+                    
+                    # 粗糙的 XML 解析提取 goals
+                    goals = []
+                    for g_match in re.finditer(r'<goal\s+id="([^"]+)"\s+status="([^"]+)"\s+desc="([^"]+)"></goal>', plan_xml):
+                        goals.append({"id": g_match.group(1), "status": g_match.group(2), "desc": g_match.group(3)})
+                        
+                    # 提取 dependencies
+                    deps = []
+                    for d_match in re.finditer(r'<depends\s+from="([^"]+)"\s+on="([^"]+)"\s*/>', plan_xml):
+                        deps.append({"from": d_match.group(1), "on": d_match.group(2)})
+                        
+                    # 提取 files
+                    files = []
+                    for f_match in re.finditer(r'<file\s+task="([^"]+)"\s+path="([^"]+)"\s*/>', plan_xml):
+                        files.append({"task": f_match.group(1), "path": f_match.group(2)})
+                        
+                    # 触发图谱更新
+                    self.eng_graph.update_plan(goals, deps)
+                    for f in files:
+                        self.eng_graph.link_file_to_task(f['task'], f['path'])
+                        
+                    console.print(f"[cyan][系统] Planner 已更新任务拓扑图 ({len(goals)} 个节点, {len(deps)} 条边, 映射了 {len(files)} 个文件)。[/cyan]")
+
                 import subprocess
                 
                 # 强制自动 commit 本回合的任何物理文件修改，提前生成 hash
@@ -517,34 +545,6 @@ class CodingAgent:
                         node_id=new_node_id, task=parsed_task, result=parsed_res, core_details=parsed_det, 
                         raw_content=turn_messages + [{"role": "assistant", "content": clean_reply}], edges=[], turn_index=turn_index, commit_hash=commit_hash
                     )
-
-                # 2. 解析 2-Hop Planner 任务网络
-                match_plan = re.search(r'<plan_network>(.*?)</plan_network>', reply_text, re.DOTALL)
-                if match_plan:
-                    clean_reply = clean_reply.replace(match_plan.group(0), "").strip()
-                    plan_xml = match_plan.group(1)
-                    
-                    # 粗糙的 XML 解析提取 goals
-                    goals = []
-                    for g_match in re.finditer(r'<goal\s+id="([^"]+)"\s+status="([^"]+)"\s+desc="([^"]+)"></goal>', plan_xml):
-                        goals.append({"id": g_match.group(1), "status": g_match.group(2), "desc": g_match.group(3)})
-                        
-                    # 提取 dependencies
-                    deps = []
-                    for d_match in re.finditer(r'<depends\s+from="([^"]+)"\s+on="([^"]+)"\s*/>', plan_xml):
-                        deps.append({"from": d_match.group(1), "on": d_match.group(2)})
-                        
-                    # 提取 files
-                    files = []
-                    for f_match in re.finditer(r'<file\s+task="([^"]+)"\s+path="([^"]+)"\s*/>', plan_xml):
-                        files.append({"task": f_match.group(1), "path": f_match.group(2)})
-                        
-                    # 触发图谱更新
-                    self.eng_graph.update_plan(goals, deps)
-                    for f in files:
-                        self.eng_graph.link_file_to_task(f['task'], f['path'])
-                        
-                    console.print(f"[cyan][系统] Planner 已更新任务拓扑图 ({len(goals)} 个节点, {len(deps)} 条边, 映射了 {len(files)} 个文件)。[/cyan]")
 
                 msg_dict["content"] = clean_reply
                 turn_messages.append(msg_dict)
