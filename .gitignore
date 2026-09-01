@@ -2,3 +2,5 @@
 .dynamic_tools/
 .env
 __pycache__/
+archive/
+任务及要求.md
