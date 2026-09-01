@@ -31,14 +31,32 @@ class GraphNotepad:
     def add_context_node(self, node_id: str, task: str, result: str, core_details: str, raw_content: list, edges: list, turn_index: int, commit_hash: str = ""):
         """添加一个新的上下文节点（轻量化，只存索引）"""
         import copy
-        # 去重处理：如果当前回合存在 expand_node 的大段返回，将其从写入 raw_log 的数组中剔除以防指数级膨胀
+        # 1. 精准溯源：提取当前回合中所有调用了 expand_node 的 tool_call_id
+        expand_node_call_ids = set()
+        for msg in raw_content:
+            if msg.get("role") == "assistant" and "tool_calls" in msg and msg["tool_calls"]:
+                for tc in msg["tool_calls"]:
+                    try:
+                        # 兼容 pydantic 对象或 dict 字典
+                        if isinstance(tc, dict):
+                            func_name = tc.get("function", {}).get("name")
+                            t_id = tc.get("id")
+                        else:
+                            func_name = getattr(getattr(tc, "function", None), "name", None)
+                            t_id = getattr(tc, "id", None)
+                            
+                        if func_name == "expand_node" and t_id:
+                            expand_node_call_ids.add(t_id)
+                    except: pass
+                    
+        # 2. 对象级拦截：去重处理
         cleaned_content = []
         for msg in raw_content:
             msg_copy = copy.deepcopy(msg)
-            if msg_copy.get("role") == "tool" and isinstance(msg_copy.get("content"), str):
-                if "展开成功" in msg_copy["content"]:
+            if msg_copy.get("role") == "tool" and msg_copy.get("tool_call_id") in expand_node_call_ids:
+                if isinstance(msg_copy.get("content"), str):
                     header = msg_copy["content"].split("\n")[0]
-                    msg_copy["content"] = f"{header}\n[详细内容已在本地存储中去重，请直接查阅被引用的原图谱节点]"
+                    msg_copy["content"] = f"{header}\n[详细内容已在本地外存中去重，请直接查阅原图谱节点]"
             cleaned_content.append(msg_copy)
 
         try:
