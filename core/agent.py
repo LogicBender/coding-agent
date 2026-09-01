@@ -176,6 +176,7 @@ class CodingAgent:
         if evicted:
             # 被换出的节点回滚：清空当前 B 区，从外存调回自身及前两回合
             self.history_B = []
+            swapped_in_turns = []
             if os.path.exists(self.notepad.raw_log_path):
                 with open(self.notepad.raw_log_path, 'r', encoding='utf-8') as f:
                     for line in f:
@@ -185,15 +186,24 @@ class CodingAgent:
                             # 提取目标回合及前两回合（[turn_index-2, turn_index]）
                             if t_idx and (turn_index - 2 <= t_idx <= turn_index):
                                 self.history_B.append(data)
+                                swapped_in_turns.append(t_idx)
                         except: pass
+            
+            # 状态同步：将捞回内存的节点在图谱中标回 In_Memory 状态
+            for t_idx in swapped_in_turns:
+                n_id = f"Node_{t_idx}"
+                if self.notepad.graph.has_node(n_id):
+                    self.notepad.graph.nodes[n_id]['in_Context'] = True
         else:
             # 正常回滚：截断历史
             self.history_B = [t for t in self.history_B if t.get("turn_index") <= turn_index]
             
         self.save_history()
         
-        # 截断图谱
+        # 截断图谱（先通过 evict_node 进行悬空指针垃圾回收，再物理删除）
         nodes_to_remove = [n for n, d in self.notepad.graph.nodes(data=True) if d.get('turn_index') and d['turn_index'] > turn_index]
+        for n in nodes_to_remove:
+            self.notepad.evict_node(n)
         self.notepad.graph.remove_nodes_from(nodes_to_remove)
         self.notepad.save()
         
@@ -238,6 +248,7 @@ class CodingAgent:
         os.makedirs(new_folder, exist_ok=True)
         
         new_history = []
+        swapped_in_turns = []
         if evicted:
             if os.path.exists(self.notepad.raw_log_path):
                 with open(self.notepad.raw_log_path, 'r', encoding='utf-8') as f:
@@ -247,6 +258,7 @@ class CodingAgent:
                             t_idx = data.get('turn_index')
                             if t_idx and (turn_index - 2 <= t_idx <= turn_index):
                                 new_history.append(data)
+                                swapped_in_turns.append(t_idx)
                         except: pass
         else:
             new_history = [t for t in self.history_B if t.get("turn_index") <= turn_index]
@@ -257,7 +269,15 @@ class CodingAgent:
         from memory.graph_notepad import GraphNotepad
         new_notepad = GraphNotepad(os.path.join(new_folder, "graph.json"), os.path.join(new_folder, "history_raw.jsonl"))
         new_notepad.graph = self.notepad.graph.copy()
+        
+        # 状态同步：将捞回内存的节点在新图谱中标回 In_Memory 状态
+        for t_idx in swapped_in_turns:
+            n_id = f"Node_{t_idx}"
+            if new_notepad.graph.has_node(n_id):
+                new_notepad.graph.nodes[n_id]['in_Context'] = True
         nodes_to_remove = [n for n, d in new_notepad.graph.nodes(data=True) if d.get('turn_index') and d['turn_index'] > turn_index]
+        for n in nodes_to_remove:
+            new_notepad.evict_node(n)
         new_notepad.graph.remove_nodes_from(nodes_to_remove)
         new_notepad.save()
         
@@ -283,6 +303,7 @@ class CodingAgent:
         # 2. 清理图谱与外存日志
         node_id = f"Node_{turn_index}"
         if self.notepad.graph.has_node(node_id):
+            self.notepad.evict_node(node_id)
             self.notepad.graph.remove_node(node_id)
             self.notepad.save()
             
