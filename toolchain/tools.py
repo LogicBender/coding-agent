@@ -92,7 +92,7 @@ def run_command(command: str) -> str:
     except Exception as e:
         return f"[Error] 错误: 无法执行命令。\n详细信息: {str(e)}"
 
-from dynamic_tools_manager import DynamicToolManager
+from toolchain.dynamic_tools_manager import DynamicToolManager
 
 # 全局初始化动态工具管理器
 dyn_manager = DynamicToolManager()

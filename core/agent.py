@@ -1,10 +1,10 @@
 import os
 import json
 import re
-from llm_client import init_client, chat_completion
-from tools import get_tools_schema, execute_tool
-from graph_notepad import GraphNotepad
-from engineering_graph import EngineeringGraph
+from gateway.llm_client import init_client, chat_completion
+from toolchain.tools import get_tools_schema, execute_tool
+from memory.graph_notepad import GraphNotepad
+from memory.engineering_graph import EngineeringGraph
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Confirm
@@ -254,7 +254,7 @@ class CodingAgent:
         with open(os.path.join(new_folder, "history.json"), 'w', encoding='utf-8') as f:
             json.dump(new_history, f, ensure_ascii=False, indent=2)
             
-        from graph_notepad import GraphNotepad
+        from memory.graph_notepad import GraphNotepad
         new_notepad = GraphNotepad(os.path.join(new_folder, "graph.json"), os.path.join(new_folder, "history_raw.jsonl"))
         new_notepad.graph = self.notepad.graph.copy()
         nodes_to_remove = [n for n, d in new_notepad.graph.nodes(data=True) if d.get('turn_index') and d['turn_index'] > turn_index]

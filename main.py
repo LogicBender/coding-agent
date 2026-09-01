@@ -1,5 +1,5 @@
 import os
-from agent import CodingAgent, console
+from core.agent import CodingAgent, console
 from prompt_toolkit import PromptSession
 from prompt_toolkit.styles import Style
 from prompt_toolkit.key_binding import KeyBindings
