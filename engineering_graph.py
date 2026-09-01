@@ -34,14 +34,14 @@ class EngineeringGraph:
     def update_plan(self, goals: list, dependencies: list):
         """
         接收 LLM 传来的局部 2-Hop 更新 (Patch)。
-        goals: [{"id": "G_Auth", "desc": "...", "status": "✅ 已完成" | "⏳ 正在攻坚" | "⏳ 待处理"}]
+        goals: [{"id": "G_Auth", "desc": "...", "status": "[Success] 已完成" | "In_Progress" | "Pending"}]
         dependencies: [{"from": "G_API", "on": "G_Auth"}]
         """
         # 1. 更新或插入节点
         for g in goals:
             node_id = g['id']
             if not self.graph.has_node(node_id):
-                self.graph.add_node(node_id, type="task", desc=g.get('desc', ''), status=g.get('status', '⏳ 待处理'))
+                self.graph.add_node(node_id, type="task", desc=g.get('desc', ''), status=g.get('status', 'Pending'))
             else:
                 # 仅更新被声明的属性
                 if 'desc' in g and g['desc']:
@@ -85,7 +85,7 @@ class EngineeringGraph:
         lines = []
         for t in tasks:
             node = self.graph.nodes[t]
-            status = node.get('status', '⏳ 待处理')
+            status = node.get('status', 'Pending')
             desc = node.get('desc', '')
             
             # 查找依赖

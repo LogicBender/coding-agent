@@ -1,0 +1,4 @@
+.agent_sessions/
+.dynamic_tools/
+.env
+__pycache__/

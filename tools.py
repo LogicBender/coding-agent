@@ -25,11 +25,11 @@ def read_file(filepath: str) -> str:
         if not os.path.isabs(filepath):
             filepath = os.path.abspath(filepath)
         if not os.path.exists(filepath):
-            return f"❌ 错误: 文件不存在 {filepath}"
+            return f"[Error] 错误: 文件不存在 {filepath}"
         with open(filepath, 'r', encoding='utf-8') as f:
             return f.read()
     except Exception as e:
-        return f"❌ 错误: 读取文件失败 {filepath}\n详细信息: {str(e)}"
+        return f"[Error] 错误: 读取文件失败 {filepath}\n详细信息: {str(e)}"
 
 def write_file(filepath: str, content: str) -> str:
     auto_git_backup(f"before writing {filepath}")
@@ -39,9 +39,9 @@ def write_file(filepath: str, content: str) -> str:
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(content)
-        return f"✅ 成功: 文件已全量写入到 {filepath}"
+        return f"[Success] 成功: 文件已全量写入到 {filepath}"
     except Exception as e:
-        return f"❌ 错误: 写入文件失败 {filepath}\n详细信息: {str(e)}"
+        return f"[Error] 错误: 写入文件失败 {filepath}\n详细信息: {str(e)}"
 
 def edit_file(filepath: str, target_content: str, replacement_content: str) -> str:
     auto_git_backup(f"before editing {filepath}")
@@ -49,23 +49,23 @@ def edit_file(filepath: str, target_content: str, replacement_content: str) -> s
         if not os.path.isabs(filepath):
             filepath = os.path.abspath(filepath)
         if not os.path.exists(filepath):
-            return f"❌ 错误: 文件不存在 {filepath}"
+            return f"[Error] 错误: 文件不存在 {filepath}"
         
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
             
         count = content.count(target_content)
         if count == 0:
-            return "❌ 错误: 未找到匹配内容。请检查缩进、空格或换行符。"
+            return "[Error] 错误: 未找到匹配内容。请检查缩进、空格或换行符。"
         elif count > 1:
-            return f"❌ 错误: 找到 {count} 处匹配。请提供更多上下文行。"
+            return f"[Error] 错误: 找到 {count} 处匹配。请提供更多上下文行。"
             
         new_content = content.replace(target_content, replacement_content)
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(new_content)
-        return f"✅ 成功: 已精准局部替换 {filepath} 中的代码块。"
+        return f"[Success] 成功: 已精准局部替换 {filepath} 中的代码块。"
     except Exception as e:
-        return f"❌ 错误: 局部修改文件失败 {filepath}\n详细信息: {str(e)}"
+        return f"[Error] 错误: 局部修改文件失败 {filepath}\n详细信息: {str(e)}"
 
 def run_command(command: str) -> str:
     auto_git_backup(f"before running command: {command}")
@@ -85,15 +85,20 @@ def run_command(command: str) -> str:
             output = output[:500] + f"\n\n... [警告：输出过长，已省略中间 {omitted} 个字符] ...\n\n" + output[-1500:]
             
         if result.returncode != 0:
-            return f"⚠️ 命令执行完成，但返回了错误码 {result.returncode}:\n{output}"
-        return f"✅ 命令执行成功:\n{output}" if output.strip() else "✅ 命令执行成功，无终端输出。"
+            return f"[Warn] 命令执行完成，但返回了错误码 {result.returncode}:\n{output}"
+        return f"[Success] 命令执行成功:\n{output}" if output.strip() else "[Success] 命令执行成功，无终端输出。"
     except subprocess.TimeoutExpired:
-        return "❌ 错误: 命令执行超时 (超过 120 秒)。"
+        return "[Error] 错误: 命令执行超时 (超过 120 秒)。"
     except Exception as e:
-        return f"❌ 错误: 无法执行命令。\n详细信息: {str(e)}"
+        return f"[Error] 错误: 无法执行命令。\n详细信息: {str(e)}"
+
+from dynamic_tools_manager import DynamicToolManager
+
+# 全局初始化动态工具管理器
+dyn_manager = DynamicToolManager()
 
 def get_tools_schema() -> list:
-    return [
+    base_tools = [
         {
             "type": "function",
             "function": {
@@ -159,7 +164,7 @@ def get_tools_schema() -> list:
             "type": "function",
             "function": {
                 "name": "expand_node",
-                "description": "缺页中断核心机制：当系统上下文图谱（system_memory_graph）中提示某个节点的状态为 [🔴 已换出] 时，你可以调用此工具传入节点 ID，拉取该节点当时被换出的完整原文日志。如果你发现需要理解之前的上下文，务必首先调用此工具。",
+                "description": "缺页中断核心机制：当系统上下文图谱（system_memory_graph）中提示某个节点的状态为 [Evicted] 时，你可以调用此工具传入节点 ID，拉取该节点当时被换出的完整原文日志。如果你发现需要理解之前的上下文，务必首先调用此工具。",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -168,15 +173,35 @@ def get_tools_schema() -> list:
                     "required": ["node_id"]
                 }
             }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "create_tool",
+                "description": "【高级特性】由大模型自己为自己编写专属工具。当你发现某些重复性操作（如正则爬取、特定 API 抓包、复杂的数学计算）需要原生 Python 支持时，你可以直接编写工具代码并永久热重载到自己的武器库中。",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "tool_name": {"type": "string", "description": "工具的英文函数名，例如 fetch_html"},
+                        "description": {"type": "string", "description": "给大模型自己看的工具详细用途描述"},
+                        "parameters_schema_json": {"type": "string", "description": "符合 OpenAPI 规范的 Parameters 部分的 JSON 字符串表示。"},
+                        "python_code": {"type": "string", "description": "完整且可独立运行的 Python 代码。必须包含与 tool_name 同名的函数，并且返回值必须是可以通过 str() 打印的。可以导入常见的标准库。"}
+                    },
+                    "required": ["tool_name", "description", "parameters_schema_json", "python_code"]
+                }
+            }
         }
     ]
+    # 拼接原生基础工具与大模型自己创造的衍生工具
+    return base_tools + dyn_manager.get_schemas()
 
 def execute_tool(tool_name: str, arguments: str, notepad=None, current_node_id=None) -> str:
     try:
         args_dict = json.loads(arguments)
     except json.JSONDecodeError:
-        return "❌ 错误: 工具参数解析失败，无法解析为 JSON 格式。"
+        return "[Error] 错误: 工具参数解析失败，无法解析为 JSON 格式。"
 
+    # 1. 基础硬编码工具路由
     if tool_name == "read_file":
         return read_file(args_dict.get("filepath"))
     elif tool_name == "write_file":
@@ -186,6 +211,14 @@ def execute_tool(tool_name: str, arguments: str, notepad=None, current_node_id=N
     elif tool_name == "run_command":
         return run_command(args_dict.get("command"))
     elif tool_name == "expand_node":
-        return notepad.expand_node(args_dict.get("node_id"), current_node_id) if notepad else "❌ 错误: 图引擎未初始化"
+        return notepad.expand_node(args_dict.get("node_id"), current_node_id) if notepad else "[Error] 错误: 图引擎未初始化"
+    elif tool_name == "create_tool":
+        return dyn_manager.create_tool(
+            args_dict.get("tool_name"),
+            args_dict.get("description"),
+            args_dict.get("parameters_schema_json"),
+            args_dict.get("python_code")
+        )
+    # 2. 动态衍生工具路由 fallback
     else:
-        return f"❌ 错误: 找不到名为 {tool_name} 的工具。"
+        return dyn_manager.execute(tool_name, args_dict)

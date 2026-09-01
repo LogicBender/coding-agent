@@ -28,7 +28,7 @@ class GraphNotepad:
         except Exception:
             pass
 
-    def add_context_node(self, node_id: str, task: str, result: str, core_details: str, raw_content: list, edges: list, turn_index: int):
+    def add_context_node(self, node_id: str, task: str, result: str, core_details: str, raw_content: list, edges: list, turn_index: int, commit_hash: str = ""):
         """添加一个新的上下文节点（轻量化，只存索引）"""
         import copy
         # 去重处理：如果当前回合存在 expand_node 的大段返回，将其从写入 raw_log 的数组中剔除以防指数级膨胀
@@ -53,6 +53,7 @@ class GraphNotepad:
             result=result,
             core_details=core_details,
             turn_index=turn_index,
+            commit_hash=commit_hash,
             in_Context=True
         )
         
@@ -84,15 +85,15 @@ class GraphNotepad:
     def expand_node(self, node_id: str, current_node_id: str = None) -> str:
         """供大模型调用：循着指针去原始线性日志里捞取原文，并建立软链接指针"""
         if not self.graph.has_node(node_id):
-            return f"❌ 错误: 图中不存在节点 {node_id}"
+            return f"[Error] 错误: 图中不存在节点 {node_id}"
         
         node = self.graph.nodes[node_id]
         if node.get('in_Context') == True:
-            return f"⚠️ 节点 {node_id} 当前状态为 in_Context: true，其上下文仍在近期历史记录中，无需额外展开。"
+            return f"[Warn] 节点 {node_id} 当前状态为 in_Context: true，其上下文仍在近期历史记录中，无需额外展开。"
             
         turn_idx = node.get('turn_index')
         if turn_idx is None:
-            return f"❌ 错误: 节点 {node_id} 丢失了线性日志指针。"
+            return f"[Error] 错误: 节点 {node_id} 丢失了线性日志指针。"
             
         try:
             with open(self.raw_log_path, 'r', encoding='utf-8') as f:
@@ -104,17 +105,38 @@ class GraphNotepad:
                         
                         # 建立指针软连接
                         if current_node_id and self.graph.has_node(node_id):
-                            self.graph.nodes[node_id]['in_Context'] = f"🔗 指向 {current_node_id}"
+                            self.graph.nodes[node_id]['in_Context'] = f" 指向 {current_node_id}"
                             self.save()
                             
-                        return f"✅ 节点 {node_id} 展开成功:\n{content_str}"
-            return f"❌ 错误: 在原始线性日志中未找到 turn_index {turn_idx}"
+                        return f"[Success] 节点 {node_id} 展开成功:\n{content_str}"
+            return f"[Error] 错误: 在原始线性日志中未找到 turn_index {turn_idx}"
         except Exception as e:
-            return f"❌ 错误: 读取原始日志失败: {str(e)}"
+            return f"[Error] 错误: 读取原始日志失败: {str(e)}"
 
-    def get_graph_json(self) -> str:
-        """直接输出原生图结构 JSON，供放在 [D] 区"""
+    def get_markdown_view(self) -> str:
+        """输出可读性高的 Markdown 列表格式，包含状态和关联节点"""
         if self.graph.number_of_nodes() == 0:
-            return "{}"
-        data = nx.node_link_data(self.graph)
-        return json.dumps(data, ensure_ascii=False, indent=2)
+            return "（上下文轨迹为空）"
+            
+        lines = []
+        for node_id, data in self.graph.nodes(data=True):
+            status = "[In_Memory]" if data.get("in_Context") else "[Evicted]"
+            pointer = data.get("pointer")
+            task = data.get("task", "")
+            
+            # 提取非 NEXT_STEP 的语义关联边
+            related_nodes = []
+            for u, v, edata in self.graph.edges(data=True):
+                if edata.get("relation") == "RELATES_TO" and (u == node_id or v == node_id):
+                    target = v if u == node_id else u
+                    if target not in related_nodes:
+                        related_nodes.append(target)
+            
+            edge_str = f" 相关联的上下文节点: {', '.join(related_nodes)}" if related_nodes else ""
+            
+            if pointer:
+                lines.append(f"- {node_id}: [Pointer -> {pointer}]{edge_str}")
+            else:
+                lines.append(f"- {node_id}: {task} {status}{edge_str}")
+                
+        return "\n".join(lines)

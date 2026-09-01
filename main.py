@@ -1,153 +1,191 @@
-import sys
 import os
-import shutil
-from rich.console import Console
-from agent import CodingAgent
+from agent import CodingAgent, console
 from prompt_toolkit import PromptSession
-from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.styles import Style
-
-console = Console()
-
-def get_prompt():
-    """获取带顶部边框的 Prompt"""
-    width = shutil.get_terminal_size().columns
-    line = "─" * width
-    return HTML(f"\n\n<ansiblue>{line}</ansiblue>\n<ansigreen><b>You: </b></ansigreen>")
-
-def bottom_toolbar():
-    """获取带底部边框和模型信息的 Toolbar"""
-    width = shutil.get_terminal_size().columns
-    line = "─" * width
-    model_name = "deepseek-v4-pro"
-    model_text = f"Model: {model_name}"
-    # 计算空格以实现右对齐
-    spaces = " " * max(0, width - len(model_text) - 1)
-    return HTML(f"<ansiblue>{line}</ansiblue>\n{spaces}<ansigray>{model_text}</ansigray>")
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.formatted_text import HTML
 
 def main():
-    console.print("[bold blue][系统] 欢迎使用 Coding Agent (Powered by DeepSeek)![/bold blue]")
-    console.print("[dim]可用命令: /new <name> (开启新对话), /resume [name] (切换或查看对话), /history, /del <index>, /clear, /exit[/dim]\n")
+    console.print("[cyan][系统] 欢迎使用 Coding Agent![/cyan]")
+    console.print("[dim]可用命令: /help, /new <name>, /resume, /history, /del <index>, /erase <index>, /clear, /model, /context, /type, /exit[/dim]\n")
     
-    custom_style = Style.from_dict({
-        'bottom-toolbar': 'noreverse', 
-    })
     agent = CodingAgent()
-    session = PromptSession()
     
+    kb = KeyBindings()
+    @kb.add('escape', 'enter')
+    def _(event):
+        event.current_buffer.insert_text('\n')
+        
+    @kb.add('enter')
+    def _(event):
+        event.current_buffer.validate_and_handle()
+
+    style = Style.from_dict({
+        'prompt': 'ansicyan bold',
+        'bottom-toolbar': 'noreverse'
+    })
+    
+    import shutil
+    def bottom_toolbar():
+        mode = "Auto-Accept" if agent.auto_accept else "Normal"
+        model = agent.model
+        term_width = shutil.get_terminal_size().columns
+        left = f" {mode}"
+        right = f"Model: {model}"
+        space = term_width - len(left) - len(right)
+        if space < 0: space = 1
+        return HTML(f"<b><ansiblue>{'─' * term_width}</ansiblue></b>\n" + left + (" " * space) + right)
+
+    session = PromptSession(style=style, key_bindings=kb, multiline=True, bottom_toolbar=bottom_toolbar)
+
     while True:
         try:
-            # 引入动态 Prompt 和 Bottom Toolbar，让输入区永远在框内
-            user_input = session.prompt(message=get_prompt, bottom_toolbar=bottom_toolbar, style=custom_style)
+            term_width = shutil.get_terminal_size().columns
+            console.print(f"\n\n[bold blue]{'─' * term_width}[/bold blue]")
+            # console.print("[dim](提示: Enter 发送, Shift+Enter 换行)[/dim]")
+            user_input = session.prompt('> ').strip()
+            # console.print(f"[bold blue]{'─' * term_width}[/bold blue]\n")
             
-            if user_input.lower() in ['/exit', '/quit', 'exit', 'quit']:
-                console.print("[bold yellow][系统] 再见！[/bold yellow]")
-                break
-            if not user_input.strip():
+            if not user_input:
                 continue
                 
-            # --- 拦截本地交互命令 ---
             if user_input.startswith('/'):
-                cmd = user_input.split()
+                cmd_parts = user_input.split(' ', 1)
+                cmd = cmd_parts[0].lower()
+                arg = cmd_parts[1].strip() if len(cmd_parts) > 1 else ""
                 
-                # 新增 /new 开启全新对话
-                if cmd[0] == '/new':
-                    if len(cmd) == 1:
-                        console.print("[red][系统] 用法: /new <session_name>[/red]")
+                if cmd == '/exit':
+                    break
+                elif cmd == '/help':
+                    console.print("[cyan]可用命令列表:[/cyan]")
+                    console.print("/new <name>         - 创建新会话")
+                    console.print("/resume \\[name]      - 切换或查看会话")
+                    console.print("/history            - 查看当前会话历史回合")
+                    console.print("/del <idx>          - 浅度删除（仅从当前缓存窗口剔除，外存和图谱保留）")
+                    console.print("/erase <idx>        - 深度擦除（从内存、图谱、外存彻底抹除该回合痕迹）")
+                    console.print("/fork <idx> <name>  - 派生分支（从指定回合 Git 分叉并拉起平行会话）")
+                    console.print("/rollback <idx>     - 代码回档（代码和上下文均回退至某历史回合）")
+                    console.print("/clear              - 清空当前活动缓存")
+                    console.print("/model \\[name]       - 查看或切换大模型名称")
+                    console.print("/context            - 打印当前缓存字符占用量及阈值上限")
+                    console.print("/type               - 开启/关闭自动审查模式 (跳过非高危工具的人工确认)")
+                    console.print("/exit               - 退出系统")
+                elif cmd == '/new':
+                    if not arg:
+                        console.print("[red][Error] 请指定会话名称。[/red]")
+                        continue
+                    agent.switch_session(arg)
+                    console.print(f"[cyan][系统] 已切换到新会话 '{arg}'[/cyan]")
+                elif cmd == '/resume':
+                    sessions = []
+                    if os.path.exists(agent.session_dir):
+                        sessions = [d for d in os.listdir(agent.session_dir) if os.path.isdir(os.path.join(agent.session_dir, d))]
+                    if not arg:
+                        console.print(f"[cyan][系统] 可用对话记录:[/cyan] {', '.join(sessions)}")
                     else:
-                        session_name = cmd[1]
-                        target_dir = os.path.join(agent.session_dir, session_name)
-                        if os.path.exists(target_dir):
-                            console.print(f"[yellow][系统] 会话 '{session_name}' 已存在！如果你想恢复它，请使用 /resume {session_name}[/yellow]")
+                        if arg in sessions:
+                            agent.switch_session(arg)
+                            console.print(f"[cyan][系统] 已切换到会话 '{arg}'[/cyan]")
                         else:
-                            agent.switch_session(session_name)
-                            console.print(f"[green][系统] 已开启并切换到全新会话: {session_name}[/green]")
-                    continue
-
-                # 处理 /resume 命令
-                elif cmd[0] == '/resume':
-                    if len(cmd) == 1:
-                        # 查看已有 sessions（现在是遍历文件夹）
-                        if not os.path.exists(agent.session_dir):
-                            sessions = []
+                            console.print(f"[red][Error] 找不到会话 '{arg}'[/red]")
+                elif cmd == '/history':
+                    if not agent.history_B:
+                        console.print("[dim]历史记录为空。[/dim]")
+                        continue
+                    for turn in agent.history_B:
+                        node_id = turn.get("node_id", "Unknown")
+                        idx = turn.get("turn_index", "?")
+                        commit_hash = turn.get("commit_hash", "")
+                        if commit_hash:
+                            console.print(f"[cyan]=== Turn {idx} ({node_id}) [Commit: {commit_hash[:7]}] ===[/cyan]")
                         else:
-                            sessions = [d for d in os.listdir(agent.session_dir) if os.path.isdir(os.path.join(agent.session_dir, d))]
-                            
-                        if not sessions:
-                            console.print("[cyan][系统] 当前没有其他的对话记录。[/cyan]")
-                        else:
-                            console.print("[cyan][系统] 可用对话记录:[/cyan] " + ", ".join(sessions))
-                    else:
-                        # 切换到指定的 session
-                        session_name = cmd[1]
-                        target_dir = os.path.join(agent.session_dir, session_name)
-                        if not os.path.exists(target_dir):
-                            console.print(f"[red][系统] 找不到会话 '{session_name}'，如果想创建，请使用 /new {session_name}[/red]")
-                        else:
-                            agent.switch_session(session_name)
-                            console.print(f"[green][系统] 已切换到对话: {session_name}[/green]")
-                    continue
-
-                elif cmd[0] == '/history':
-                    console.print(f"\n[bold cyan][系统] 当前工作区历史 (Session: {agent.session_name}):[/bold cyan]")
-                    for i, turn in enumerate(agent.history_B):
-                        node_id = turn.get("node_id", "未知节点")
-                        console.print(f"\n[bold magenta]--- 第 {i} 回合 ({node_id}) ---[/bold magenta]")
+                            console.print(f"[cyan]=== Turn {idx} ({node_id}) ===[/cyan]")
                         for msg in turn.get("messages", []):
-                            role = msg.get("role", "unknown")
-                            content = str(msg.get("content", ""))
-                            if msg.get("tool_calls"):
-                                content += f" [调用了 {len(msg['tool_calls'])} 个工具]"
-                            short_content = content[:80].replace('\n', ' ') + ('...' if len(content)>80 else '')
-                            console.print(f"[{role.upper()}]: {short_content}")
-                    continue
-                    
-                elif cmd[0] == '/del' and len(cmd) > 1:
-                    try:
-                        idx = int(cmd[1])
-                        if 0 <= idx < len(agent.history_B):
-                            deleted_turn = agent.history_B.pop(idx)
-                            agent.save_history()
-                            node_id = deleted_turn.get("node_id")
-                            if node_id:
-                                agent.notepad.evict_node(node_id)
-                            console.print(f"[green][系统] 已删除第 {idx} 回合。该回合对应的节点 {node_id} 已在图谱中标记为换出。[/green]")
-                        else:
-                            console.print("[red][系统] 无效的索引号。请先使用 /history 查看有效的回合索引。[/red]")
-                    except ValueError:
-                        console.print("[red][系统] 用法: /del <数字>[/red]")
-                    continue
-                    
-                # 撤销改动：回到上一个 git commit
-                elif cmd[0] == '/rollback':
-                    import subprocess
-                    res = subprocess.run("git reset --hard HEAD~1", shell=True, capture_output=True, text=True)
-                    if res.returncode == 0:
-                        console.print("[green][系统] ✅ 文件状态已回滚到上一次 Agent 动作前！[/green]")
-                        console.print("[yellow][系统] 提示: 文件已恢复，但大模型上下文未改变。建议配合 /history 和 /del 删掉最后几轮错误的对话日志。[/yellow]")
+                            role = msg.get("role")
+                            content = msg.get("content", "")
+                            if role == "tool":
+                                content = f"[工具执行结果: {len(content)} chars]"
+                            elif len(content) > 200:
+                                content = content[:200] + "... [截断]"
+                            console.print(f"[dim]{role}:[/dim] {content}")
+                elif cmd == '/del':
+                    if arg.isdigit():
+                        idx = int(arg)
+                        agent.history_B = [t for t in agent.history_B if t.get("turn_index") != idx]
+                        agent.save_history()
+                        console.print(f"[cyan][系统] 浅度删除: 已将回合 {idx} 移出当前缓存。[/cyan]")
                     else:
-                        console.print(f"[red][系统] ❌ 回滚失败，可能是当前没有足够多的 Commit 记录:\n{res.stderr}[/red]")
-                    continue
-                    
-                elif cmd[0] == '/clear':
+                        console.print("[red][Error] 请提供有效的数字索引。[/red]")
+                
+                elif cmd == '/fork':
+                    if len(cmd_parts) < 2:
+                        console.print("[red][Error] 用法: /fork <turn_index> <new_session_name>[/red]")
+                        continue
+                    args = arg.split(' ')
+                    if len(args) < 2 or not args[0].isdigit():
+                        console.print("[red][Error] 用法: /fork <turn_index> <new_session_name>[/red]")
+                        continue
+                    idx = int(args[0])
+                    new_name = args[1]
+                    res = agent.fork_session(idx, new_name)
+                    console.print(res)
+                elif cmd == '/rollback':
+                    if not arg.isdigit():
+                        console.print("[red][Error] 请指定要回滚到的有效数字索引。用法: /rollback <turn_index>[/red]")
+                        continue
+                    idx = int(arg)
+                    res = agent.rollback_to_turn(idx)
+                    console.print(res)
+    
+                elif cmd == '/erase':
+                    if arg.isdigit():
+                        idx = int(arg)
+                        agent.erase_turn(idx)
+                    else:
+                        console.print("[red][Error] 请提供有效的数字索引。[/red]")
+                elif cmd == '/clear':
                     agent.history_B = []
                     agent.save_history()
-                    console.print("[green][系统] L1 Cache (活跃上下文) 已全部清空，Agent 记忆已重置！\n提示: 图谱与原始日志依然安全保存在外存中。[/green]")
-                    continue
-                    
+                    console.print("[cyan][系统] 活动缓存已清空（外存与图谱均安全保留）。[/cyan]")
+                elif cmd == '/model':
+                    if arg:
+                        agent.model = arg
+                        console.print(f"[cyan][系统] 模型已强制切换为: {agent.model}[/cyan]")
+                    else:
+                        console.print(f"[cyan][系统] 正在向远端 API 请求可用模型列表...[/cyan]")
+                        try:
+                            models_response = agent.client.models.list()
+                            available_models = sorted([m.id for m in models_response.data])
+                            console.print(f"[cyan][系统] 当前生效模型: {agent.model}[/cyan]")
+                            console.print(f"[cyan][系统] 远端端点支持的模型列表:[/cyan]")
+                            for m in available_models:
+                                if m == agent.model:
+                                    console.print(f"  * [green]{m}[/green] (当前)")
+                                else:
+                                    console.print(f"  - {m}")
+                            console.print("[dim]使用 /model <模型名> 进行切换[/dim]")
+                        except Exception as e:
+                            console.print(f"[cyan][系统] 当前生效模型: {agent.model}[/cyan]")
+                            console.print(f"[red][Error] 无法拉取远端模型列表: {e}[/red]")
+                elif cmd == '/context':
+                    char_len = sum(len(str(t.get("messages", ""))) for t in agent.history_B)
+                    console.print(f"[cyan][系统] 当前上下文使用量:[/cyan] {char_len} 字符 (软阈值: 1,000,000 | 硬上限: 2,000,000)")
+                elif cmd == '/type':
+                    agent.auto_accept = not agent.auto_accept
+                    status = "开启" if agent.auto_accept else "关闭"
+                    console.print(f"[cyan][系统] 自动审查模式已 {status}！[/cyan]")
                 else:
-                    console.print("[yellow][系统] 未知命令。可用: /new <name>, /resume [name], /history, /del <index>, /clear, /exit[/yellow]")
-                    continue
+                    console.print("[red][Error] 未知命令，请输入 /help 查看支持的命令。[/red]")
+                continue
                 
-            # 正常派发任务
             agent.run_task(user_input)
-            
+
         except KeyboardInterrupt:
-            console.print("\n[bold yellow][系统] 已手动取消。[/bold yellow]")
             continue
         except EOFError:
-            console.print("\n[bold yellow][系统] 再见！[/bold yellow]")
             break
+        except Exception as e:
+            console.print(f"[red][错误] 主循环发生异常: {str(e)}[/red]")
 
 if __name__ == "__main__":
     main()
