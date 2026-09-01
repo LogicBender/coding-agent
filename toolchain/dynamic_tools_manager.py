@@ -58,7 +58,7 @@ class DynamicToolManager:
             }
         }
         
-        # 预编译检查，防止大模型写出语法错误的垃圾代码
+        # 预编译检查，防止大模型写出语法错误的代码
         try:
             local_scope = {}
             exec(python_code, globals(), local_scope)

@@ -81,7 +81,7 @@ def main():
                     if os.path.exists(agent.session_dir):
                         sessions = [d for d in os.listdir(agent.session_dir) if os.path.isdir(os.path.join(agent.session_dir, d))]
                     if not arg:
-                        console.print(f"[cyan][系统] 可用对话记录:[/cyan] {', '.join(sessions)}")
+                        console.print(f"[cyan][系统] 可用会话记录:[/cyan] {', '.join(sessions)}")
                     else:
                         if arg in sessions:
                             agent.switch_session(arg)
@@ -97,9 +97,9 @@ def main():
                         idx = turn.get("turn_index", "?")
                         commit_hash = turn.get("commit_hash", "")
                         if commit_hash:
-                            console.print(f"[cyan]=== Turn {idx} ({node_id}) [Commit: {commit_hash[:7]}] ===[/cyan]")
+                            console.print(f"\n\n[cyan]=== Turn {idx} ({node_id}) [Commit: {commit_hash[:7]}] ===[/cyan]")
                         else:
-                            console.print(f"[cyan]=== Turn {idx} ({node_id}) ===[/cyan]")
+                            console.print(f"\n\n[cyan]=== Turn {idx} ({node_id}) ===[/cyan]")
                         for msg in turn.get("messages", []):
                             role = msg.get("role")
                             content = msg.get("content", "")
@@ -169,7 +169,7 @@ def main():
                             console.print(f"[red][Error] 无法拉取远端模型列表: {e}[/red]")
                 elif cmd == '/context':
                     char_len = sum(len(str(t.get("messages", ""))) for t in agent.history_B)
-                    console.print(f"[cyan][系统] 当前上下文使用量:[/cyan] {char_len} 字符 (软阈值: 1,000,000 | 硬上限: 2,000,000)")
+                    console.print(f"[cyan][系统] 当前上下文使用量:[/cyan] {char_len} 字符 (阈值 1,000,000 | 上限 2,000,000)")
                 elif cmd == '/type':
                     agent.auto_accept = not agent.auto_accept
                     status = "开启" if agent.auto_accept else "关闭"

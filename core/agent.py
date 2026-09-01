@@ -30,14 +30,14 @@ class CodingAgent:
             "你拥有两个维度的导航图，均会在 <system_memory_graph> 中展示给你：\n"
             "1. 工程任务网络 (Task Network): 这是项目的宏观目标、依赖拓扑与文件映射。你需要根据它来明确自己的定位。\n"
             "2. 近期上下文踪迹 (MMU Cache): 这是你最近的思考与动作流水账。状态为 [Evicted] 的节点代表日志已清理，如需查阅必须调用 expand_node 工具。\n"
-            "状态为 [Pointer -> Node_X] 表示详情在 Node_X 的日志中，请直接查阅最近历史，切勿重复调用工具！\n"
+            "状态为 [Pointer -> Node_ID] 表示详情在 Node_ID 的日志中，请直接查阅 Node_ID 对应上下文内容，切勿重复调用工具！\n"
             "\n"
             "【强制结构化总结与滚动规划】\n"
             "在你决定【不调用任何工具，准备给用户最终回复】的那一次输出时，必须在回复末尾隐式加上两段 XML。\n"
             "第一段用于更新你的 MMU 上下文轨迹：\n"
             "<graph_update>\n"
             "  <task>简述本回合动作 (10-50字)</task>\n"
-            "  <result>结果如何</result>\n"
+            "  <result>结果如何 (10-50字)</result>\n"
             "  <core_details>关键细节与教训 (30-100字)</core_details>\n"
             "  <edges>你认为哪些过去 Node ID 与本节点代表的上下文高度相关，有则列出，无则留空</edges>\n"
             "</graph_update>\n"
@@ -45,7 +45,7 @@ class CodingAgent:
             "第二段用于动态更新任务网络 (2-Hop 滚动规划)，你可以创建新任务、更新旧任务状态、或者映射刚修改的文件：\n"
             "<plan_network>\n"
             "  <goals>\n"
-            "    <goal id=\"Task_1\" status=\"[Success] 已完成\" desc=\"描述\"></goal>\n"
+            "    <goal id=\"Task_1\" status=\"[Success]\" desc=\"描述\"></goal>\n"
             "    <goal id=\"Task_2\" status=\"In_Progress\" desc=\"描述\"></goal>\n"
             "  </goals>\n"
             "  <dependencies>\n"
@@ -86,7 +86,7 @@ class CodingAgent:
                     f.write(f"\n{exc}")
                     
         try:
-            # 无论如何尝试打一个空 commit 防止 HEAD 不存在
+            # 尝试一次空 commit 防止 HEAD 不存在
             subprocess.check_call(["git", "-c", "user.name=coding_agent", "-c", "user.email=agent@local", "commit", "--allow-empty", "-m", "Initial commit"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except: pass
         

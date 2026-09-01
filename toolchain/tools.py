@@ -178,7 +178,7 @@ def get_tools_schema() -> list:
             "type": "function",
             "function": {
                 "name": "create_tool",
-                "description": "【高级特性】由大模型自己为自己编写专属工具。当你发现某些重复性操作（如正则爬取、特定 API 抓包、复杂的数学计算）需要原生 Python 支持时，你可以直接编写工具代码并永久热重载到自己的武器库中。",
+                "description": "当你发现某些操作需要大量重复使用（如正则爬取、特定 API 抓包、复杂的数学计算）或者需要原生 Python 支持时，你可以直接编写工具代码并永久热重载到自己的武器库中。",
                 "parameters": {
                     "type": "object",
                     "properties": {
