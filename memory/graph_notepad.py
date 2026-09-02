@@ -138,8 +138,14 @@ class GraphNotepad:
             
         lines = []
         for node_id, data in self.graph.nodes(data=True):
-            status = "[In_Memory]" if data.get("in_Context") else "[Evicted]"
-            pointer = data.get("pointer")
+            in_ctx = data.get("in_Context")
+            if in_ctx is True:
+                status = "[In_Memory]"
+            elif isinstance(in_ctx, str):
+                status = f"[{in_ctx.strip()}]"
+            else:
+                status = "[Evicted]"
+                
             task = data.get("task", "")
             
             # 提取非 NEXT_STEP 的语义关联边
@@ -151,10 +157,6 @@ class GraphNotepad:
                         related_nodes.append(target)
             
             edge_str = f" 相关联的上下文节点: {', '.join(related_nodes)}" if related_nodes else ""
-            
-            if pointer:
-                lines.append(f"- {node_id}: [Pointer -> {pointer}]{edge_str}")
-            else:
-                lines.append(f"- {node_id}: {task} {status}{edge_str}")
+            lines.append(f"- {node_id}: {task} {status}{edge_str}")
                 
         return "\n".join(lines)

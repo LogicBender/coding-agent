@@ -113,7 +113,11 @@ def main():
                         idx = int(arg)
                         agent.history_B = [t for t in agent.history_B if t.get("turn_index") != idx]
                         agent.save_history()
-                        console.print(f"[cyan][系统] 浅度删除: 已将回合 {idx} 移出当前缓存。[/cyan]")
+                        node_id = f"Node_{idx}"
+                        if agent.notepad.graph.has_node(node_id):
+                            agent.notepad.evict_node(node_id)
+                            agent.notepad.save()
+                        console.print(f"[cyan][系统] 浅度删除: 已将回合 {idx} 移出当前缓存，并在图谱中标记为已换出。[/cyan]")
                     else:
                         console.print("[red][Error] 请提供有效的数字索引。[/red]")
                 
@@ -144,9 +148,14 @@ def main():
                     else:
                         console.print("[red][Error] 请提供有效的数字索引。[/red]")
                 elif cmd == '/clear':
+                    for turn in agent.history_B:
+                        node_id = f"Node_{turn.get('turn_index')}"
+                        if agent.notepad.graph.has_node(node_id):
+                            agent.notepad.evict_node(node_id)
                     agent.history_B = []
                     agent.save_history()
-                    console.print("[cyan][系统] 活动缓存已清空（外存与图谱均安全保留）。[/cyan]")
+                    agent.notepad.save()
+                    console.print("[cyan][系统] 活动缓存已清空，所有节点均已标记为换出状态（外存与图谱状态已同步）。[/cyan]")
                 elif cmd == '/model':
                     if arg:
                         agent.model = arg
